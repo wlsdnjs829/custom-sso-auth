@@ -1,6 +1,6 @@
 package com.jinwon.ssoauth.infra.repository;
 
-import com.jinwon.ssoauth.domain.entity.User;
+import com.jinwon.ssoauth.domain.entity.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

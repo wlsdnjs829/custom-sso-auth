@@ -1,5 +1,6 @@
 package com.jinwon.ssoauth.infra.config;
 
+import com.jinwon.ssoauth.infra.config.jwt.JwtAuthenticationFilter;
 import com.jinwon.ssoauth.infra.config.security.CustomTokenEnhancer;
 import com.jinwon.ssoauth.infra.config.security.CustomUserDetailService;
 import lombok.RequiredArgsConstructor;
@@ -54,6 +55,11 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
                 .accessTokenConverter(accessTokenConverter())
                 .authenticationManager(authenticationManager)
                 .userDetailsService(userDetailService);
+    }
+
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter(userDetailService);
     }
 
     @Bean

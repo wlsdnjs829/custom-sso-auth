@@ -1,4 +1,4 @@
-package com.jinwon.ssoauth.domain.entity;
+package com.jinwon.ssoauth.domain.entity.user;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

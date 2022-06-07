@@ -1,6 +1,6 @@
 package com.jinwon.ssoauth.infra.config.security;
 
-import com.jinwon.ssoauth.domain.entity.User;
+import com.jinwon.ssoauth.domain.entity.user.User;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;

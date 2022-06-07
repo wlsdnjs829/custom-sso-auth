@@ -1,6 +1,6 @@
 package com.jinwon.ssoauth;
 
-import com.jinwon.ssoauth.domain.entity.User;
+import com.jinwon.ssoauth.domain.entity.user.User;
 import com.jinwon.ssoauth.infra.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
