@@ -29,12 +29,12 @@ CREATE TABLE `user`
     `email`    VARCHAR(100) NOT NULL,
     PRIMARY KEY (`user_sn`),
     UNIQUE INDEX `UK_tbl_user_uid` (`uid`)
-) COLLATE='utf8_general_ci' ENGINE=InnoDB;
+);
 
 CREATE TABLE `user_roles`
 (
     `role_sn` BIGINT(20) NOT NULL,
     `roles`     VARCHAR(255) NULL DEFAULT NULL,
-    INDEX       `FK7ie1lfmnysdogxy1g91ernbkv` (`role_sn`),
+    UNIQUE INDEX       `FK7ie1lfmnysdogxy1g91ernbkv` (`role_sn`),
     CONSTRAINT `FK_tbl_user_msrl` FOREIGN KEY (`role_sn`) REFERENCES `user` (`user_sn`)
-) COLLATE='utf8_general_ci' ENGINE=INNODB;
+);

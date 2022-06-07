@@ -1,8 +1,9 @@
 package com.jinwon.ssoauth.infra.config;
 
+import com.jinwon.ssoauth.infra.config.security.CustomAuthenticationProvider;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -11,26 +12,17 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.ExpressionUrlAuthorizationConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
-    }
+    private final CustomAuthenticationProvider authenticationProvider;
 
     @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.inMemoryAuthentication()
-                .withUser("user")
-                .password("{bcrypt}$2a$10$fMkleOIoPlxW.mWaleJj9Oo8uEJgCEsH2THjKF/7S4tqdLWvWrEDq")
-                .roles("USER");
+    protected void configure(AuthenticationManagerBuilder auth) {
+        auth.authenticationProvider(authenticationProvider);
     }
 
     @Override
@@ -47,12 +39,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private static void customize(ExpressionUrlAuthorizationConfigurer<HttpSecurity>.
                                           ExpressionInterceptUrlRegistry expressionInterceptUrlRegistry) {
-        expressionInterceptUrlRegistry.antMatchers("/oauth/**", "/h2-console/**")
+        expressionInterceptUrlRegistry.antMatchers("/oauth/**", "/h2-console/**", "/temp-user/**")
                 .permitAll()
                 .anyRequest()
                 .authenticated();
     }
-
 
     @Override
     @Bean
