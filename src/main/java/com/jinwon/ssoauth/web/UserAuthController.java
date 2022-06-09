@@ -7,6 +7,8 @@ import com.jinwon.ssoauth.infra.config.security.CustomUserDetailService;
 import com.jinwon.ssoauth.infra.utils.NetworkUtil;
 import com.jinwon.ssoauth.web.dto.JwtTokenDto;
 import com.jinwon.ssoauth.web.dto.LoginDto;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.util.Assert;
@@ -25,27 +27,31 @@ import static com.jinwon.ssoauth.infra.config.jwt.enums.TokenMessage.NON_EXPIRED
 
 @RestController
 @RequiredArgsConstructor
-public class UserController {
+@Api(tags = "사용자 인증 컨트롤러")
+public class UserAuthController {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenRedisComponent tokenRedisComponent;
     private final CustomUserDetailService userDetailService;
 
     @GetMapping("/user/me")
+    @ApiOperation(value = "사용자 정보 조회")
     public Principal user(Principal principal) {
         return principal;
     }
 
     @PostMapping("/login")
+    @ApiOperation(value = "사용자 로그인 토큰 발급")
     public JwtTokenDto login(HttpServletRequest request, @Valid @RequestBody LoginDto loginDto) {
         final User user = userDetailService.validUserThrowIfInvalid(loginDto.getUserId(), loginDto.getUserPw());
         final String clientIp = NetworkUtil.getClientIp(request);
-        final User loginUser = addInfo(user, clientIp);
+        final User loginUser = addUserInfo(user, clientIp);
 
         return new JwtTokenDto(loginUser.getAccessToken(), loginUser.getRefreshToken());
     }
 
     @PostMapping("/refresh-token")
+    @ApiOperation(value = "사용자 토큰 재사용 요청")
     public JwtTokenDto login(HttpServletRequest request, @Valid @RequestBody JwtTokenDto jwtTokenDto) {
         final String expiredAccessToken = jwtTokenDto.getToken();
         final String expiredRefreshToken = jwtTokenDto.getRefreshToken();
@@ -61,11 +67,12 @@ public class UserController {
         tokenRedisComponent.deleteValues(expiredRefreshToken);
 
         final String clientIp = NetworkUtil.getClientIp(request);
-        final User user = addInfo(refreshUser, clientIp);
+        final User user = addUserInfo(refreshUser, clientIp);
         return new JwtTokenDto(user.getAccessToken(), user.getRefreshToken());
     }
 
-    private User addInfo(User user, String clientIp) {
+    /* 사용자 추가 정보 저장 */
+    private User addUserInfo(User user, String clientIp) {
         final String token = jwtTokenProvider.generateToken(user);
         final String refreshToken = jwtTokenProvider.generateRefreshToken();
 
@@ -79,6 +86,7 @@ public class UserController {
     }
 
     @PostMapping("/logout")
+    @ApiOperation(value = "사용자 로그아웃")
     public boolean logout(Authentication authentication) {
         @SuppressWarnings("unchecked") final Optional<User> userOp = (Optional<User>) authentication.getPrincipal();
 

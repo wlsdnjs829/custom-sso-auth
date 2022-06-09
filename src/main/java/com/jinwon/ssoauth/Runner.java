@@ -34,7 +34,7 @@ public class Runner implements ApplicationRunner {
         userRepository.save(
                 User.builder()
                         .uid("jinwon")
-                        .password(passwordEncoder.encode("jinwon"))
+                        .password(passwordEncoder.encode("pass"))
                         .name("jinwon")
                         .email("jinwon@gmail.com")
                         .roles(Collections.singletonList("ROLE_USER"))

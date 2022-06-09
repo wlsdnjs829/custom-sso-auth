@@ -46,6 +46,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                                           ExpressionInterceptUrlRegistry registry) {
         registry.antMatchers("/oauth/**", "/h2-console/**", "/login", "/refresh-token")
                 .permitAll()
+                .antMatchers("/api/v2/**", "/health", "/swagger-ui.html", "/swagger/**",
+                        "/swagger-resources/**", "/webjars/**", "/v2/api-docs")
+                .permitAll()
                 .anyRequest()
                 .authenticated();
     }

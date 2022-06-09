@@ -1,14 +1,12 @@
 package com.jinwon.ssoauth.infra.config;
 
 import com.zaxxer.hikari.HikariDataSource;
-import org.h2.tools.Server;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import javax.sql.DataSource;
-import java.sql.SQLException;
 
 /**
  * H2 기본 설정
