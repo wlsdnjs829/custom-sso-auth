@@ -3,10 +3,12 @@ package com.jinwon.ssoauth.web;
 import com.jinwon.ssoauth.domain.entity.user.User;
 import com.jinwon.ssoauth.infra.component.TokenRedisComponent;
 import com.jinwon.ssoauth.infra.config.jwt.JwtTokenProvider;
+import com.jinwon.ssoauth.infra.config.jwt.enums.TokenMessage;
 import com.jinwon.ssoauth.infra.config.security.CustomUserDetailService;
 import com.jinwon.ssoauth.infra.utils.NetworkUtil;
 import com.jinwon.ssoauth.web.dto.JwtTokenDto;
 import com.jinwon.ssoauth.web.dto.LoginDto;
+import com.jinwon.ssoauth.web.exception.CustomException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -21,9 +23,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.security.Principal;
 import java.util.Optional;
-
-import static com.jinwon.ssoauth.infra.config.jwt.enums.TokenMessage.EXPIRED_REFRESH_TOKEN;
-import static com.jinwon.ssoauth.infra.config.jwt.enums.TokenMessage.NON_EXPIRED;
 
 @RestController
 @RequiredArgsConstructor
@@ -59,11 +58,15 @@ public class UserAuthController {
         final Optional<User> accessUser = tokenRedisComponent.getTokenUser(expiredAccessToken);
         final boolean validateToken = jwtTokenProvider.validateToken(expiredAccessToken);
 
-        Assert.isTrue(!validateToken || accessUser.isEmpty(), NON_EXPIRED.getMessage());
+        if (accessUser.isPresent() && validateToken) {
+            throw new CustomException(TokenMessage.NON_EXPIRED);
+        }
+
         tokenRedisComponent.deleteValues(expiredAccessToken);
 
         final User refreshUser = tokenRedisComponent.getTokenUser(expiredRefreshToken)
-                .orElseThrow(() -> new IllegalArgumentException(EXPIRED_REFRESH_TOKEN.getMessage()));
+                .orElseThrow(() -> new CustomException(TokenMessage.EXPIRED_REFRESH_TOKEN));
+
         tokenRedisComponent.deleteValues(expiredRefreshToken);
 
         final String clientIp = NetworkUtil.getClientIp(request);

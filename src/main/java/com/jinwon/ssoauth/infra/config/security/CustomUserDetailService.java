@@ -1,7 +1,9 @@
 package com.jinwon.ssoauth.infra.config.security;
 
 import com.jinwon.ssoauth.domain.entity.user.User;
+import com.jinwon.ssoauth.infra.config.jwt.enums.TokenMessage;
 import com.jinwon.ssoauth.infra.repository.UserRepository;
+import com.jinwon.ssoauth.web.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AccountStatusUserDetailsChecker;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -21,12 +23,11 @@ public class CustomUserDetailService implements UserDetailsService {
 
     private final AccountStatusUserDetailsChecker detailsChecker = new AccountStatusUserDetailsChecker();
 
-    private static final String USER_IS_NOT_EXISTS = "존재하지 않는 사용자입니다.";
-
     @Override
     public User loadUserByUsername(String name) {
         final User user = userRepository.findByUid(name)
-                .orElseThrow(() -> new UsernameNotFoundException(USER_IS_NOT_EXISTS));
+                .orElseThrow(() -> new CustomException(TokenMessage.NOT_EXIST_USER));
+
         detailsChecker.check(user);
         return user;
     }
@@ -40,15 +41,15 @@ public class CustomUserDetailService implements UserDetailsService {
      */
     public User validUserThrowIfInvalid(String userId, String userPw) {
         final User user = userRepository.findByUid(userId)
-                .orElseThrow(IllegalArgumentException::new);
+                .orElseThrow(() -> new CustomException(TokenMessage.NOT_EXIST_USER));
 
         final String password = user.getPassword();
 
-        if (passwordEncoder.matches(userPw, password)) {
-            return user;
+        if (!passwordEncoder.matches(userPw, password)) {
+            throw new CustomException(TokenMessage.NON_MATCH_USER_CODE);
         }
 
-        throw new IllegalArgumentException();
+        return user;
     }
 
 }

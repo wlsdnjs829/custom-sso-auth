@@ -3,6 +3,8 @@ package com.jinwon.ssoauth.infra.component;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jinwon.ssoauth.domain.entity.user.User;
+import com.jinwon.ssoauth.infra.config.jwt.enums.TokenMessage;
+import com.jinwon.ssoauth.web.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -52,9 +54,7 @@ public class TokenRedisComponent {
             final ObjectMapper objectMapper = new ObjectMapper();
             return objectMapper.writeValueAsString(user);
         } catch (JsonProcessingException e) {
-            log.error(ExceptionUtils.getStackTrace(e));
-            log.error(JSON_PARSING_ERROR);
-            throw new IllegalArgumentException();
+            throw new CustomException(TokenMessage.PARSER_FAILED);
         }
     }
 
