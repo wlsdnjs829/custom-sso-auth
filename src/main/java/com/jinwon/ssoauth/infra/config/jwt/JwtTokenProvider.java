@@ -2,17 +2,37 @@ package com.jinwon.ssoauth.infra.config.jwt;
 
 import com.jinwon.ssoauth.domain.entity.user.User;
 import com.jinwon.ssoauth.infra.config.jwt.enums.JwtException;
+import com.jinwon.ssoauth.infra.config.jwt.enums.TokenMessage;
+import com.jinwon.ssoauth.web.exception.CustomException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.bouncycastle.util.encoders.Base64;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import javax.validation.constraints.NotNull;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyFactory;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
@@ -24,17 +44,42 @@ import java.util.Date;
 @Component
 public class JwtTokenProvider {
 
-    @Value("${security.oauth2.jwt.sign.key}")
-    private String signKey;
+    @Value("${security.oauth2.jwt.alias}")
+    private String jwtAlias;
+
+    @Value("${security.oauth2.jwt.code}")
+    private String jwtCode;
+
+    @Value("${security.oauth2.jwt.expired}")
+    private int tokenExpired;
+
+    @Value("${security.oauth2.jwt.public}")
+    private String publicPath;
+
+    @Value("${security.oauth2.jwt.private}")
+    private String privatePath;
+
+    private KeyStore keyStore;
 
     private static final String ISSUER = "SSO-AUTH";
-
-    /* 변경 시 TokenRedisComponent TTL 변경 필요 */
-    private static final int TOKEN_EXPIRED = 1;
 
     private static final String ID = "id";
     private static final String NAME = "name";
     private static final String EMAIL = "email";
+    private static final String RSA = "RSA";
+    private static final String JKS = "JKS";
+
+    @PostConstruct
+    public void init() {
+        try {
+            keyStore = KeyStore.getInstance(JKS);
+            final InputStream resourceAsStream = getClass().getResourceAsStream(privatePath);
+            keyStore.load(resourceAsStream, jwtCode.toCharArray());
+        } catch (KeyStoreException | CertificateException | NoSuchAlgorithmException | IOException e) {
+            throw new CustomException(TokenMessage.EXPIRED_REFRESH_TOKEN);
+        }
+
+    }
 
     /**
      * accessToken 생성
@@ -52,11 +97,11 @@ public class JwtTokenProvider {
                 .setIssuedAt(Date.from(now))
                 .setSubject(id)
                 .setId(user.getUid())
-                .setExpiration(Date.from(now.plus(TOKEN_EXPIRED, ChronoUnit.HOURS)))
+                .setExpiration(Date.from(now.plus(tokenExpired, ChronoUnit.HOURS)))
                 .claim(ID, id)
                 .claim(NAME, user.getName())
                 .claim(EMAIL, user.getEmail())
-                .signWith(SignatureAlgorithm.HS512, signKey)
+                .signWith(SignatureAlgorithm.RS512, getPrivateKey())
                 .compact();
     }
 
@@ -70,9 +115,18 @@ public class JwtTokenProvider {
                 .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
                 .setIssuer(ISSUER)
                 .setIssuedAt(Date.from(now))
-                .setExpiration(Date.from(now.plus(TOKEN_EXPIRED, ChronoUnit.DAYS)))
-                .signWith(SignatureAlgorithm.HS512, signKey)
+                .setExpiration(Date.from(now.plus(tokenExpired, ChronoUnit.DAYS)))
+                .signWith(SignatureAlgorithm.RS512, getPrivateKey())
                 .compact();
+    }
+
+    /* 개인 키 발급 */
+    private PrivateKey getPrivateKey() {
+        try {
+            return (PrivateKey) keyStore.getKey(jwtAlias, jwtCode.toCharArray());
+        } catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException e) {
+            throw new CustomException(TokenMessage.EXPIRED_REFRESH_TOKEN);
+        }
     }
 
     /**
@@ -83,7 +137,7 @@ public class JwtTokenProvider {
     public boolean validateToken(String accessToken) {
         try {
             final Jws<Claims> claims = Jwts.parser()
-                    .setSigningKey(signKey)
+                    .setSigningKey(getPublicKey())
                     .parseClaimsJws(accessToken);
 
             return claims.getBody()
@@ -93,6 +147,20 @@ public class JwtTokenProvider {
             log.error(JwtException.getMessageByExceptionClass(ex.getClass()));
             log.error(ExceptionUtils.getStackTrace(ex));
             return false;
+        }
+    }
+
+    /* 공개 키 발급 */
+    private PublicKey getPublicKey() {
+        try {
+            final Resource resource = new ClassPathResource(publicPath);
+            final String publicKey = IOUtils.toString(resource.getInputStream(), StandardCharsets.UTF_8.name());
+            final byte[] publicBytes = Base64.decode(publicKey);
+            final X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicBytes);
+            final KeyFactory keyFactory = KeyFactory.getInstance(RSA);
+            return keyFactory.generatePublic(keySpec);
+        } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
+            throw new CustomException(TokenMessage.EXPIRED_REFRESH_TOKEN);
         }
     }
 

@@ -41,3 +41,8 @@
 > > &#x2001; "error": "EXPIRED_REFRESH_TOKEN"
 > >
 > >}
+> 
+> RSA 인증서 발급
+> > keytool -genkey -v -keystore server.jks -alias server_private -keyalg RSA -sigalg MD5withRSA -keysize 1024 -validity 30000
+> >
+> > keytool -list -rfc --keystore server.jks | C:\Users\olo_j\Downloads\openssl-0.9.8k_X64\bin\openssl x509 -inform pem -pubkey

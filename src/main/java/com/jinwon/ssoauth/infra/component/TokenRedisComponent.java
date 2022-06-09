@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Component;
@@ -25,10 +26,10 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class TokenRedisComponent {
 
-    private final RedisTemplate<String, String> redisTemplate;
+    @Value("${security.oauth2.jwt.expired}")
+    private int tokenExpired;
 
-    /* 변경 시 JwtTokenProvider 같이 변경 필요 */
-    private static final int HOURS = 1;
+    private final RedisTemplate<String, String> redisTemplate;
 
     private static final String JSON_PARSING_ERROR = "Json Parsing Error";
 
@@ -45,7 +46,7 @@ public class TokenRedisComponent {
 
         final String json = parserJacksonString(user);
         final ValueOperations<String, String> values = redisTemplate.opsForValue();
-        values.set(token, json, Duration.ofHours(HOURS));
+        values.set(token, json, Duration.ofHours(tokenExpired));
     }
 
     /* 사용자 정보 Json 데이터 변환 */
@@ -71,7 +72,7 @@ public class TokenRedisComponent {
 
         final String json = parserJacksonString(user);
         final ValueOperations<String, String> values = redisTemplate.opsForValue();
-        values.set(refreshToken, json, Duration.ofDays(HOURS));
+        values.set(refreshToken, json, Duration.ofDays(tokenExpired));
     }
 
     /**
