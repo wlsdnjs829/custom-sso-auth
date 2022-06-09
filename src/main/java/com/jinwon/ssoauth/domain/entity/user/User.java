@@ -1,6 +1,8 @@
 package com.jinwon.ssoauth.domain.entity.user;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.jinwon.ssoauth.domain.entity.deserializer.AuthorityDeserializer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,11 +19,15 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * 유저 Entity
+ */
 @Builder
 @Getter
 @NoArgsConstructor
@@ -54,6 +60,16 @@ public class User implements UserDetails {
     @Builder.Default
     private final List<String> roles = new ArrayList<>();
 
+    @Transient
+    private String accessToken;
+
+    @Transient
+    private String refreshToken;
+
+    @Transient
+    private String clientIp;
+
+    @JsonDeserialize(using = AuthorityDeserializer.class)
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return this.roles.stream()
@@ -89,6 +105,21 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    public User accessToken(String accessToken) {
+        this.accessToken = accessToken;
+        return this;
+    }
+
+    public User refreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+        return this;
+    }
+
+    public User clientIp(String clientIp) {
+        this.clientIp = clientIp;
+        return this;
     }
 
 }

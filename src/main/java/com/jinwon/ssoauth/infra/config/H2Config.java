@@ -10,6 +10,9 @@ import org.springframework.context.annotation.Configuration;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 
+/**
+ * H2 기본 설정
+ */
 @Configuration
 public class H2Config {
 

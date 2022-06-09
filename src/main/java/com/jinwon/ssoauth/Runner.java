@@ -10,6 +10,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 
+/**
+ * 개발 테스트 용도 Initializer
+ */
 @Component
 @RequiredArgsConstructor
 public class Runner implements ApplicationRunner {
@@ -25,6 +28,15 @@ public class Runner implements ApplicationRunner {
                         .password(passwordEncoder.encode("pass"))
                         .name("user")
                         .email("skyer9@gmail.com")
+                        .roles(Collections.singletonList("ROLE_USER"))
+                        .build());
+
+        userRepository.save(
+                User.builder()
+                        .uid("jinwon")
+                        .password(passwordEncoder.encode("jinwon"))
+                        .name("jinwon")
+                        .email("jinwon@gmail.com")
                         .roles(Collections.singletonList("ROLE_USER"))
                         .build());
     }

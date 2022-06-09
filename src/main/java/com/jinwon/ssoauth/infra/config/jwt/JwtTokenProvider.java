@@ -1,22 +1,25 @@
 package com.jinwon.ssoauth.infra.config.jwt;
 
 import com.jinwon.ssoauth.domain.entity.user.User;
+import com.jinwon.ssoauth.infra.config.jwt.enums.JwtException;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Header;
+import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.SignatureException;
-import io.jsonwebtoken.UnsupportedJwtException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
+import javax.validation.constraints.NotNull;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
+/**
+ * JWT 토큰 인증
+ */
 @Slf4j
 @Component
 public class JwtTokenProvider {
@@ -24,43 +27,73 @@ public class JwtTokenProvider {
     @Value("${security.oauth2.jwt.sign.key}")
     private String signKey;
 
-    public String generateToken(Authentication authentication) {
-        final User userPrincipal = (User) authentication.getPrincipal();
+    private static final String ISSUER = "SSO-AUTH";
+
+    /* 변경 시 TokenRedisComponent TTL 변경 필요 */
+    private static final int TOKEN_EXPIRED = 1;
+
+    private static final String ID = "id";
+    private static final String NAME = "name";
+    private static final String EMAIL = "email";
+
+    /**
+     * accessToken 생성
+     *
+     * @param user 사용자 정보
+     */
+    public String generateToken(@NotNull User user) {
+        final Instant now = Instant.now();
+
+        final String id = String.valueOf(user.getId());
 
         return Jwts.builder()
-                .setSubject(Long.toString(userPrincipal.getId()))
-                .setIssuedAt(Date.from(Instant.now()))
-                .setExpiration(Date.from(Instant.now().plus(2, ChronoUnit.HOURS)))
-                .signWith(SignatureAlgorithm.RS512, signKey)
+                .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
+                .setIssuer(ISSUER)
+                .setIssuedAt(Date.from(now))
+                .setSubject(id)
+                .setId(user.getUid())
+                .setExpiration(Date.from(now.plus(TOKEN_EXPIRED, ChronoUnit.HOURS)))
+                .claim(ID, id)
+                .claim(NAME, user.getName())
+                .claim(EMAIL, user.getEmail())
+                .signWith(SignatureAlgorithm.HS512, signKey)
                 .compact();
     }
 
-    public String getUserNameFromJWT(String token) {
-        Claims claims = Jwts.parser()
-                .setSigningKey(signKey)
-                .parseClaimsJws(token)
-                .getBody();
+    /**
+     * refreshToken 생성
+     */
+    public String generateRefreshToken() {
+        final Instant now = Instant.now();
 
-        return claims.getId();
+        return Jwts.builder()
+                .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
+                .setIssuer(ISSUER)
+                .setIssuedAt(Date.from(now))
+                .setExpiration(Date.from(now.plus(TOKEN_EXPIRED, ChronoUnit.DAYS)))
+                .signWith(SignatureAlgorithm.HS512, signKey)
+                .compact();
     }
 
-    public boolean validateToken(String authToken) {
+    /**
+     * 유효한 토큰 여부 반환
+     *
+     * @param accessToken JWT 토큰
+     */
+    public boolean validateToken(String accessToken) {
         try {
-            Jwts.parser()
+            final Jws<Claims> claims = Jwts.parser()
                     .setSigningKey(signKey)
-                    .parseClaimsJws(authToken);
-            return true;
-        } catch (SignatureException ex) {
-            log.error("Invalid JWT signature");
-        } catch (MalformedJwtException ex) {
-            log.error("Invalid JWT token");
-        } catch (ExpiredJwtException ex) {
-            log.error("Expired JWT token");
-        } catch (UnsupportedJwtException ex) {
-            log.error("Unsupported JWT token");
-        } catch (IllegalArgumentException ex) {
-            log.error("JWT claims string is empty.");
+                    .parseClaimsJws(accessToken);
+
+            return claims.getBody()
+                    .getExpiration()
+                    .after(new Date());
+        } catch (Exception ex) {
+            log.error(JwtException.getMessageByExceptionClass(ex.getClass()));
+            log.error(ExceptionUtils.getStackTrace(ex));
+            return false;
         }
-        return false;
     }
+
 }
