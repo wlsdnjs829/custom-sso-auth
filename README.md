@@ -8,6 +8,9 @@
 > https://www.skyer9.pe.kr/wordpress/?p=2367
 
 ## 기능 설명
+> 서버 구성 필수 환경
+> > Redis Local (RedisConfig.class) 참조
+> 
 > 기본 베이스 : JWT
 > 
 > > 인증 방식
