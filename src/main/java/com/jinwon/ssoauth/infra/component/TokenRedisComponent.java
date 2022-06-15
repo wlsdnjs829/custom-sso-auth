@@ -26,7 +26,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class TokenRedisComponent {
 
-    @Value("${security.oauth2.jwt.expired}")
+    @Value("${spring.security.oauth2.jwt.expired}")
     private int tokenExpired;
 
     private final RedisTemplate<String, String> redisTemplate;

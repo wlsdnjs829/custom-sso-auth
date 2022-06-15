@@ -1,0 +1,34 @@
+{
+  "properties": [
+    {
+      "name": "spring.datasource.jdbc-url",
+      "type": "java.lang.String",
+      "description": "Spring Data Source JDBC URL."
+    },
+    {
+      "name": "spring.security.oauth2.jwt.alias",
+      "type": "java.lang.String",
+      "description": "ALIAS selection value when creating RSA."
+    },
+    {
+      "name": "spring.security.oauth2.jwt.code",
+      "type": "java.lang.String",
+      "description": "Code value when generating RSA."
+    },
+    {
+      "name": "spring.security.oauth2.jwt.expired",
+      "type": "java.lang.String",
+      "description": "JWT token expiration time (unit: access hours, refresh_token: days)."
+    },
+    {
+      "name": "spring.security.oauth2.jwt.public",
+      "type": "java.lang.String",
+      "description": "JWT token public key location."
+    },
+    {
+      "name": "spring.security.oauth2.jwt.private",
+      "type": "java.lang.String",
+      "description": "JWT token private key location."
+    }
+  ]
+}

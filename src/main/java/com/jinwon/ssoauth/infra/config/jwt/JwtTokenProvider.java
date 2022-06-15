@@ -44,19 +44,19 @@ import java.util.Date;
 @Component
 public class JwtTokenProvider {
 
-    @Value("${security.oauth2.jwt.alias}")
+    @Value("${spring.security.oauth2.jwt.alias}")
     private String jwtAlias;
 
-    @Value("${security.oauth2.jwt.code}")
+    @Value("${spring.security.oauth2.jwt.code}")
     private String jwtCode;
 
-    @Value("${security.oauth2.jwt.expired}")
+    @Value("${spring.security.oauth2.jwt.expired}")
     private int tokenExpired;
 
-    @Value("${security.oauth2.jwt.public}")
+    @Value("${spring.security.oauth2.jwt.public}")
     private String publicPath;
 
-    @Value("${security.oauth2.jwt.private}")
+    @Value("${spring.security.oauth2.jwt.private}")
     private String privatePath;
 
     private KeyStore keyStore;
@@ -89,7 +89,7 @@ public class JwtTokenProvider {
     public String generateToken(@NotNull User user) {
         final Instant now = Instant.now();
 
-        final String id = String.valueOf(user.getId());
+        final String id = String.valueOf(user.getUserSn());
 
         return Jwts.builder()
                 .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
