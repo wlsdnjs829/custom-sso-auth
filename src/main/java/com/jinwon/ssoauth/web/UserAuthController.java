@@ -13,11 +13,11 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
-import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -35,23 +35,24 @@ public class UserAuthController {
 
     @GetMapping("/user/me")
     @ApiOperation(value = "사용자 정보 조회")
-    public Principal user(Principal principal) {
-        return principal;
+    public Mono<Principal> user(Principal principal) {
+        return Mono.just(principal);
     }
 
     @PostMapping("/login")
     @ApiOperation(value = "사용자 로그인 토큰 발급")
-    public JwtTokenDto login(HttpServletRequest request, @Valid @RequestBody LoginDto loginDto) {
+    public Mono<JwtTokenDto> login(HttpServletRequest request, @Valid @RequestBody LoginDto loginDto) {
         final User user = userDetailService.validUserThrowIfInvalid(loginDto.getUserId(), loginDto.getUserPw());
         final String clientIp = NetworkUtil.getClientIp(request);
         final User loginUser = addUserInfo(user, clientIp);
 
-        return new JwtTokenDto(loginUser.getAccessToken(), loginUser.getRefreshToken());
+        final JwtTokenDto jwtTokenDto = new JwtTokenDto(loginUser.getAccessToken(), loginUser.getRefreshToken());
+        return Mono.just(jwtTokenDto);
     }
 
     @PostMapping("/refresh-token")
     @ApiOperation(value = "사용자 토큰 재사용 요청")
-    public JwtTokenDto login(HttpServletRequest request, @Valid @RequestBody JwtTokenDto jwtTokenDto) {
+    public Mono<JwtTokenDto> login(HttpServletRequest request, @Valid @RequestBody JwtTokenDto jwtTokenDto) {
         final String expiredAccessToken = jwtTokenDto.getToken();
         final String expiredRefreshToken = jwtTokenDto.getRefreshToken();
 
@@ -71,7 +72,8 @@ public class UserAuthController {
 
         final String clientIp = NetworkUtil.getClientIp(request);
         final User user = addUserInfo(refreshUser, clientIp);
-        return new JwtTokenDto(user.getAccessToken(), user.getRefreshToken());
+        final JwtTokenDto jwtToken = new JwtTokenDto(user.getAccessToken(), user.getRefreshToken());
+        return Mono.just(jwtToken);
     }
 
     /* 사용자 추가 정보 저장 */
@@ -90,7 +92,7 @@ public class UserAuthController {
 
     @PostMapping("/logout")
     @ApiOperation(value = "사용자 로그아웃")
-    public boolean logout(Authentication authentication) {
+    public Mono<Boolean> logout(Authentication authentication) {
         @SuppressWarnings("unchecked") final Optional<User> userOp = (Optional<User>) authentication.getPrincipal();
 
         final User user = userOp.orElseThrow(IllegalArgumentException::new);
@@ -98,7 +100,8 @@ public class UserAuthController {
         final String accessToken = user.getAccessToken();
         final String refreshToken = user.getRefreshToken();
 
-        return tokenRedisComponent.deleteValues(accessToken) && tokenRedisComponent.deleteValues(refreshToken);
+        return Mono.just(
+                tokenRedisComponent.deleteValues(accessToken) && tokenRedisComponent.deleteValues(refreshToken));
     }
 
 }
