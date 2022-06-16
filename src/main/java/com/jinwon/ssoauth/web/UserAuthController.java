@@ -9,8 +9,8 @@ import com.jinwon.ssoauth.infra.utils.NetworkUtil;
 import com.jinwon.ssoauth.web.dto.JwtTokenDto;
 import com.jinwon.ssoauth.web.dto.LoginDto;
 import com.jinwon.ssoauth.web.exception.CustomException;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,7 +26,7 @@ import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
-@Api(tags = "사용자 인증 컨트롤러")
+@Tag(name = "사용자 인증 컨트롤러")
 public class UserAuthController {
 
     private final JwtTokenProvider jwtTokenProvider;
@@ -34,13 +34,13 @@ public class UserAuthController {
     private final CustomUserDetailService userDetailService;
 
     @GetMapping("/user/me")
-    @ApiOperation(value = "사용자 정보 조회")
+    @Operation(description = "사용자 정보 조회")
     public Mono<Principal> user(Principal principal) {
         return Mono.just(principal);
     }
 
     @PostMapping("/login")
-    @ApiOperation(value = "사용자 로그인 토큰 발급")
+    @Operation(description = "사용자 로그인 토큰 발급")
     public Mono<JwtTokenDto> login(HttpServletRequest request, @Valid @RequestBody LoginDto loginDto) {
         final User user = userDetailService.validUserThrowIfInvalid(loginDto.getUserId(), loginDto.getUserPw());
         final String clientIp = NetworkUtil.getClientIp(request);
@@ -51,7 +51,7 @@ public class UserAuthController {
     }
 
     @PostMapping("/refresh-token")
-    @ApiOperation(value = "사용자 토큰 재사용 요청")
+    @Operation(description = "사용자 토큰 재사용 요청")
     public Mono<JwtTokenDto> login(HttpServletRequest request, @Valid @RequestBody JwtTokenDto jwtTokenDto) {
         final String expiredAccessToken = jwtTokenDto.getToken();
         final String expiredRefreshToken = jwtTokenDto.getRefreshToken();
@@ -91,7 +91,7 @@ public class UserAuthController {
     }
 
     @PostMapping("/logout")
-    @ApiOperation(value = "사용자 로그아웃")
+    @Operation(description = "사용자 로그아웃")
     public Mono<Boolean> logout(Authentication authentication) {
         @SuppressWarnings("unchecked") final Optional<User> userOp = (Optional<User>) authentication.getPrincipal();
 

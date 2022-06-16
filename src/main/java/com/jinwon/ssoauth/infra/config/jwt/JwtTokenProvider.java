@@ -14,6 +14,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.bouncycastle.util.encoders.Base64;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -42,6 +43,7 @@ import java.util.Date;
  */
 @Slf4j
 @Component
+@RefreshScope
 public class JwtTokenProvider {
 
     @Value("${spring.security.oauth2.jwt.alias}")
