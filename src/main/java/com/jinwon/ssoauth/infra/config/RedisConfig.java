@@ -1,5 +1,7 @@
 package com.jinwon.ssoauth.infra.config;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
@@ -11,17 +13,21 @@ import org.springframework.session.web.context.AbstractHttpSessionApplicationIni
 /**
  * Redis 설정
  */
+@RefreshScope
 @Configuration
 @EnableRedisHttpSession
 public class RedisConfig extends AbstractHttpSessionApplicationInitializer {
 
     /* 주입 옵션으로 변경 예정 */
-    private static final String LOCAL = "127.0.0.1";
-    private static final int PORT = 6379;
+    @Value("${redis.host}")
+    private String host;
+
+    @Value("${redis.port}")
+    private int port;
 
     @Bean
     public LettuceConnectionFactory connectionFactory() {
-        return new LettuceConnectionFactory(LOCAL, PORT);
+        return new LettuceConnectionFactory(host, port);
     }
 
     @Bean
