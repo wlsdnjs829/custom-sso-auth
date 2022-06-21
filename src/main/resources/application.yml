@@ -1,10 +1,26 @@
 server:
   port: ${PORT:9000}
+  servlet:
+    context-path: /auth
 
+---
 spring:
   config:
+    activate:
+      on-profile: local
     import: "optional:configserver:http://localhost:8091"
   cloud:
     config:
-      name: sso,eureka,cloud-bus,springdoc
+      name: sso,eureka,cloud-bus,springdoc,redis,auth
       profile: local
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+    import: "optional:configserver:http://config-server:8091"
+  cloud:
+    config:
+      name: sso,eureka,cloud-bus,springdoc,redis,auth
+      profile: docker
