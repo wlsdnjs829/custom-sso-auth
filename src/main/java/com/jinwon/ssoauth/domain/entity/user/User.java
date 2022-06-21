@@ -15,7 +15,6 @@ import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -40,7 +39,7 @@ public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long userSn;
+    private long userId;
 
     @Column(nullable = false, unique = true, length = 50)
     private String uid;
@@ -59,7 +58,7 @@ public class User implements UserDetails {
     private String provider;
 
     @ElementCollection
-    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "role_sn", referencedColumnName = "userSn"))
+    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "role_sn", referencedColumnName = "userId"))
     @Builder.Default
     private final List<String> roles = new ArrayList<>();
 

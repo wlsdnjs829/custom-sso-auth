@@ -65,7 +65,7 @@ public class JwtTokenProvider {
 
     private static final String ISSUER = "SSO-AUTH";
 
-    private static final String ID = "id";
+    private static final String USER_ID = "userId";
     private static final String NAME = "name";
     private static final String EMAIL = "email";
     private static final String RSA = "RSA";
@@ -91,7 +91,7 @@ public class JwtTokenProvider {
     public String generateToken(@NotNull User user) {
         final Instant now = Instant.now();
 
-        final String id = String.valueOf(user.getUserSn());
+        final String id = String.valueOf(user.getUserId());
 
         return Jwts.builder()
                 .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
@@ -100,7 +100,7 @@ public class JwtTokenProvider {
                 .setSubject(id)
                 .setId(user.getUid())
                 .setExpiration(Date.from(now.plus(tokenExpired, ChronoUnit.HOURS)))
-                .claim(ID, id)
+                .claim(USER_ID, id)
                 .claim(NAME, user.getName())
                 .claim(EMAIL, user.getEmail())
                 .signWith(SignatureAlgorithm.RS512, getPrivateKey())
