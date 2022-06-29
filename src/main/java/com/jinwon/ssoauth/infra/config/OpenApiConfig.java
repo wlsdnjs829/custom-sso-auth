@@ -1,6 +1,5 @@
 package com.jinwon.ssoauth.infra.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
@@ -27,7 +26,7 @@ public class OpenApiConfig {
     public GroupedOpenApi api() {
         return GroupedOpenApi.builder()
                 .group(API_NAME)
-                .pathsToMatch("/auth/**")
+                .pathsToMatch("/**")
                 .build();
     }
 

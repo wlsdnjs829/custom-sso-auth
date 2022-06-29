@@ -7,7 +7,7 @@ plugins {
 
 group = 'com.jinwon'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '11'
+sourceCompatibility = '17'
 
 configurations {
     compileOnly {
@@ -29,9 +29,11 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 
-    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
-    implementation 'org.springframework.cloud:spring-cloud-config-client'
-    implementation 'org.springframework.cloud:spring-cloud-starter-bus-amqp'
+//    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+//    implementation 'org.springframework.cloud:spring-cloud-config-client'
+//    implementation 'org.springframework.cloud:spring-cloud-starter-bus-amqp'
+
+    implementation 'commons-codec:commons-codec'
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -55,6 +57,8 @@ dependencies {
     implementation 'com.h2database:h2'
 
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+    runtimeOnly 'mysql:mysql-connector-java'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'

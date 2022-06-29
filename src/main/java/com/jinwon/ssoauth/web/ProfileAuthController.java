@@ -1,6 +1,6 @@
 package com.jinwon.ssoauth.web;
 
-import com.jinwon.ssoauth.domain.entity.user.User;
+import com.jinwon.ssoauth.domain.entity.profile.Profile;
 import com.jinwon.ssoauth.infra.component.TokenRedisComponent;
 import com.jinwon.ssoauth.infra.config.jwt.JwtTokenProvider;
 import com.jinwon.ssoauth.infra.config.jwt.enums.TokenMessage;
@@ -26,79 +26,79 @@ import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "사용자 인증 컨트롤러")
-public class UserAuthController {
+@Tag(name = "프로필 인증 컨트롤러")
+public class ProfileAuthController {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenRedisComponent tokenRedisComponent;
     private final CustomUserDetailService userDetailService;
 
-    @GetMapping("/user/me")
-    @Operation(description = "사용자 정보 조회")
-    public Mono<Principal> user(Principal principal) {
+    @GetMapping("/profile/me")
+    @Operation(summary = "사용자 정보 조회")
+    public Mono<Principal> profile(Principal principal) {
         return Mono.just(principal);
     }
 
     @PostMapping("/login")
-    @Operation(description = "사용자 로그인 토큰 발급")
+    @Operation(summary = "사용자 로그인 토큰 발급")
     public Mono<JwtTokenDto> login(HttpServletRequest request, @Valid @RequestBody LoginDto loginDto) {
-        final User user = userDetailService.validUserThrowIfInvalid(loginDto.getUserId(), loginDto.getUserPw());
+        final Profile profile = userDetailService.validProfileThrowIfInvalid(loginDto.getEmail(), loginDto.getPassword());
         final String clientIp = NetworkUtil.getClientIp(request);
-        final User loginUser = addUserInfo(user, clientIp);
+        final Profile loginProfile = addProfileInfo(profile, clientIp);
 
-        final JwtTokenDto jwtTokenDto = new JwtTokenDto(loginUser.getAccessToken(), loginUser.getRefreshToken());
+        final JwtTokenDto jwtTokenDto = new JwtTokenDto(loginProfile.getAccessToken(), loginProfile.getRefreshToken());
         return Mono.just(jwtTokenDto);
     }
 
     @PostMapping("/refresh-token")
-    @Operation(description = "사용자 토큰 재사용 요청")
+    @Operation(summary = "사용자 토큰 재사용 요청")
     public Mono<JwtTokenDto> login(HttpServletRequest request, @Valid @RequestBody JwtTokenDto jwtTokenDto) {
         final String expiredAccessToken = jwtTokenDto.getToken();
         final String expiredRefreshToken = jwtTokenDto.getRefreshToken();
 
-        final Optional<User> accessUser = tokenRedisComponent.getTokenUser(expiredAccessToken);
+        final Optional<Profile> accessProfile = tokenRedisComponent.getTokenProfile(expiredAccessToken);
         final boolean validateToken = jwtTokenProvider.validateToken(expiredAccessToken);
 
-        if (accessUser.isPresent() && validateToken) {
+        if (accessProfile.isPresent() && validateToken) {
             throw new CustomException(TokenMessage.NON_EXPIRED);
         }
 
         tokenRedisComponent.deleteValues(expiredAccessToken);
 
-        final User refreshUser = tokenRedisComponent.getTokenUser(expiredRefreshToken)
+        final Profile refreshProfile = tokenRedisComponent.getTokenProfile(expiredRefreshToken)
                 .orElseThrow(() -> new CustomException(TokenMessage.EXPIRED_REFRESH_TOKEN));
 
         tokenRedisComponent.deleteValues(expiredRefreshToken);
 
         final String clientIp = NetworkUtil.getClientIp(request);
-        final User user = addUserInfo(refreshUser, clientIp);
-        final JwtTokenDto jwtToken = new JwtTokenDto(user.getAccessToken(), user.getRefreshToken());
+        final Profile profile = addProfileInfo(refreshProfile, clientIp);
+        final JwtTokenDto jwtToken = new JwtTokenDto(profile.getAccessToken(), profile.getRefreshToken());
         return Mono.just(jwtToken);
     }
 
-    /* 사용자 추가 정보 저장 */
-    private User addUserInfo(User user, String clientIp) {
-        final String token = jwtTokenProvider.generateToken(user);
+    /* 프로필 추가 정보 저장 */
+    private Profile addProfileInfo(Profile profile, String clientIp) {
+        final String token = jwtTokenProvider.generateToken(profile);
         final String refreshToken = jwtTokenProvider.generateRefreshToken();
 
-        final User loginUser = user.accessToken(token)
+        final Profile loginProfile = profile.accessToken(token)
                 .refreshToken(refreshToken)
                 .clientIp(clientIp);
 
-        tokenRedisComponent.addAccessToken(token, loginUser);
-        tokenRedisComponent.addRefreshToken(refreshToken, loginUser);
-        return user;
+        tokenRedisComponent.addAccessToken(token, loginProfile);
+        tokenRedisComponent.addRefreshToken(refreshToken, loginProfile);
+        return profile;
     }
 
     @PostMapping("/logout")
-    @Operation(description = "사용자 로그아웃")
+    @Operation(summary = "프로필 로그아웃")
     public Mono<Boolean> logout(Authentication authentication) {
-        @SuppressWarnings("unchecked") final Optional<User> userOp = (Optional<User>) authentication.getPrincipal();
+        @SuppressWarnings("unchecked") final Optional<Profile> profileOp = (Optional<Profile>) authentication.getPrincipal();
 
-        final User user = userOp.orElseThrow(IllegalArgumentException::new);
+        final Profile profile = profileOp.orElseThrow(IllegalArgumentException::new);
 
-        final String accessToken = user.getAccessToken();
-        final String refreshToken = user.getRefreshToken();
+        final String accessToken = profile.getAccessToken();
+        final String refreshToken = profile.getRefreshToken();
 
         return Mono.just(
                 tokenRedisComponent.deleteValues(accessToken) && tokenRedisComponent.deleteValues(refreshToken));

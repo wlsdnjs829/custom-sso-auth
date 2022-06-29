@@ -1,6 +1,6 @@
 package com.jinwon.ssoauth.infra.config.jwt;
 
-import com.jinwon.ssoauth.domain.entity.user.User;
+import com.jinwon.ssoauth.domain.entity.profile.Profile;
 import com.jinwon.ssoauth.infra.config.jwt.enums.JwtException;
 import com.jinwon.ssoauth.infra.config.jwt.enums.TokenMessage;
 import com.jinwon.ssoauth.web.exception.CustomException;
@@ -10,11 +10,10 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.bouncycastle.util.encoders.Base64;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -43,7 +42,7 @@ import java.util.Date;
  */
 @Slf4j
 @Component
-@RefreshScope
+//@RefreshScope
 public class JwtTokenProvider {
 
     @Value("${spring.security.oauth2.jwt.alias}")
@@ -86,23 +85,23 @@ public class JwtTokenProvider {
     /**
      * accessToken 생성
      *
-     * @param user 사용자 정보
+     * @param profile 사용자 정보
      */
-    public String generateToken(@NotNull User user) {
+    public String generateToken(@NotNull Profile profile) {
         final Instant now = Instant.now();
 
-        final String id = String.valueOf(user.getUserId());
+        final String id = String.valueOf(profile.getProfileId());
 
         return Jwts.builder()
                 .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
                 .setIssuer(ISSUER)
                 .setIssuedAt(Date.from(now))
                 .setSubject(id)
-                .setId(user.getUid())
+                .setId(profile.getEmail())
                 .setExpiration(Date.from(now.plus(tokenExpired, ChronoUnit.HOURS)))
                 .claim(USER_ID, id)
-                .claim(NAME, user.getName())
-                .claim(EMAIL, user.getEmail())
+                .claim(NAME, profile.getName())
+                .claim(EMAIL, profile.getEmail())
                 .signWith(SignatureAlgorithm.RS512, getPrivateKey())
                 .compact();
     }
@@ -157,7 +156,7 @@ public class JwtTokenProvider {
         try {
             final Resource resource = new ClassPathResource(publicPath);
             final String publicKey = IOUtils.toString(resource.getInputStream(), StandardCharsets.UTF_8.name());
-            final byte[] publicBytes = Base64.decode(publicKey);
+            final byte[] publicBytes = Base64.decodeBase64(publicKey);
             final X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicBytes);
             final KeyFactory keyFactory = KeyFactory.getInstance(RSA);
             return keyFactory.generatePublic(keySpec);

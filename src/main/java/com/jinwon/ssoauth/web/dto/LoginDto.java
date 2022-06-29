@@ -10,11 +10,11 @@ import javax.validation.constraints.NotNull;
 public class LoginDto {
 
     @NotNull
-    @Schema(description = "사용자 아이디", required = true)
-    private String userId;
+    @Schema(description = "아이디", required = true)
+    private String email;
 
     @NotNull
-    @Schema(description = "사용자 고유 코드", required = true)
-    private String userPw;
+    @Schema(description = "고유 코드", required = true)
+    private String password;
 
 }

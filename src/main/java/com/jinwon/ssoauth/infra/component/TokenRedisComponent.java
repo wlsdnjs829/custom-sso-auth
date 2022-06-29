@@ -2,7 +2,7 @@ package com.jinwon.ssoauth.infra.component;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jinwon.ssoauth.domain.entity.user.User;
+import com.jinwon.ssoauth.domain.entity.profile.Profile;
 import com.jinwon.ssoauth.infra.config.jwt.enums.TokenMessage;
 import com.jinwon.ssoauth.web.exception.CustomException;
 import lombok.RequiredArgsConstructor;
@@ -36,25 +36,27 @@ public class TokenRedisComponent {
     /**
      * 레디스 토큰 정보 저장
      *
-     * @param token accessToken
-     * @param user  사용자 정보
+     * @param token   accessToken
+     * @param profile 사용자 정보
      */
-    public void addAccessToken(String token, User user) {
-        if (Objects.isNull(token) || Objects.isNull(user)) {
+    public void addAccessToken(String token, Profile profile) {
+        if (Objects.isNull(token) || Objects.isNull(profile)) {
             return;
         }
 
-        final String json = parserJacksonString(user);
+        final String json = parserJacksonString(profile);
         final ValueOperations<String, String> values = redisTemplate.opsForValue();
         values.set(token, json, Duration.ofHours(tokenExpired));
     }
 
     /* 사용자 정보 Json 데이터 변환 */
-    private String parserJacksonString(User user) {
+    private String parserJacksonString(Profile profile) {
         try {
             final ObjectMapper objectMapper = new ObjectMapper();
-            return objectMapper.writeValueAsString(user);
+//            objectMapper.registerModule(new Hibernate5Module());
+            return objectMapper.writeValueAsString(profile);
         } catch (JsonProcessingException e) {
+            log.error(ExceptionUtils.getStackTrace(e));
             throw new CustomException(TokenMessage.PARSER_FAILED);
         }
     }
@@ -63,24 +65,24 @@ public class TokenRedisComponent {
      * 레디스 재설정 토큰 저장
      *
      * @param refreshToken 재설정 토큰
-     * @param user         사용자 정보
+     * @param profile      사용자 정보
      */
-    public void addRefreshToken(String refreshToken, User user) {
-        if (Objects.isNull(refreshToken) || Objects.isNull(user)) {
+    public void addRefreshToken(String refreshToken, Profile profile) {
+        if (Objects.isNull(refreshToken) || Objects.isNull(profile)) {
             return;
         }
 
-        final String json = parserJacksonString(user);
+        final String json = parserJacksonString(profile);
         final ValueOperations<String, String> values = redisTemplate.opsForValue();
         values.set(refreshToken, json, Duration.ofDays(tokenExpired));
     }
 
     /**
-     * 토큰 사용자 조회
+     * 토큰 프로필 조회
      *
      * @param token accessToken & refreshToken
      */
-    public Optional<User> getTokenUser(String token) {
+    public Optional<Profile> getTokenProfile(String token) {
         final ValueOperations<String, String> values = redisTemplate.opsForValue();
         final String content = values.get(token);
 
@@ -88,16 +90,16 @@ public class TokenRedisComponent {
             return Optional.empty();
         }
 
-        return getUser(content);
+        return getProfile(content);
     }
 
     /* json 데이터 사용자 정보 변환 */
-    private Optional<User> getUser(String content) {
+    private Optional<Profile> getProfile(String content) {
         try {
             final ObjectMapper objectMapper = new ObjectMapper();
 
             return Optional.of(
-                    objectMapper.readValue(content, User.class));
+                    objectMapper.readValue(content, Profile.class));
         } catch (JsonProcessingException e) {
             log.error(ExceptionUtils.getStackTrace(e));
             log.error(JSON_PARSING_ERROR);

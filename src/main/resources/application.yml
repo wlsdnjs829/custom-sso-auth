@@ -3,24 +3,64 @@ server:
   servlet:
     context-path: /auth
 
----
 spring:
-  config:
-    activate:
-      on-profile: local
-    import: "optional:configserver:http://localhost:8091"
-  cloud:
-    config:
-      name: sso,eureka,cloud-bus,springdoc,redis,auth
-      profile: local
+  application:
+    name: SSO-AUTH-SERVER
 
----
-spring:
-  config:
-    activate:
-      on-profile: docker
-    import: "optional:configserver:http://config-server:8091"
-  cloud:
-    config:
-      name: sso,eureka,cloud-bus,springdoc,redis,auth
-      profile: docker
+  datasource:
+    jdbc-url: jdbc:mysql://rpm-profile-free-tier.c6o9jygtebcw.ap-northeast-2.rds.amazonaws.com:3306/rpm?serverTimezone=UTC&characterEncoding=UTF-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: rpm
+    password: midasit1
+
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+
+  security:
+    oauth2:
+      jwt:
+        alias: server_private
+        code: mid@sit
+        expired: 1
+        public: /publicKey.txt
+        private: /server.jks
+
+  redis:
+    host: master.kr-dv-elc-infra1-v1.bhicw6.apn2.cache.amazonaws.com
+    port: 4379
+    database: 1
+    ssl: true
+
+  data:
+    redis:
+      repositories:
+        enabled: false
+
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+
+#---
+#spring:
+#  config:
+#    activate:
+#      on-profile: local
+#    import: "optional:configserver:http://localhost:8091"
+#  cloud:
+#    config:
+#      name: sso,eureka,cloud-bus,springdoc,redis,auth
+#      profile: local
+#
+#---
+#spring:
+#  config:
+#    activate:
+#      on-profile: docker
+#    import: "optional:configserver:http://config-server:8091"
+#  cloud:
+#    config:
+#      name: sso,eureka,cloud-bus,springdoc,redis,auth
+#      profile: docker
