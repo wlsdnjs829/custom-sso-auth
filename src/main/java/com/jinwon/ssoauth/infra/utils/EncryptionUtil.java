@@ -1,6 +1,6 @@
 package com.jinwon.ssoauth.infra.utils;
 
-import com.jinwon.ssoauth.web.exception.EncryptionException;
+import com.jinwon.ssoauth.infra.exception.EncryptionException;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;

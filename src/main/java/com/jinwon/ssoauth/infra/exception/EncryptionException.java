@@ -1,4 +1,4 @@
-package com.jinwon.ssoauth.web.exception;
+package com.jinwon.ssoauth.infra.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

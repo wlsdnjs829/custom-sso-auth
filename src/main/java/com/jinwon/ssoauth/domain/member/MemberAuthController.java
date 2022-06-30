@@ -1,14 +1,14 @@
-package com.jinwon.ssoauth.web;
+package com.jinwon.ssoauth.domain.member;
 
-import com.jinwon.ssoauth.domain.entity.profile.Profile;
+import com.jinwon.ssoauth.domain.member.Member;
+import com.jinwon.ssoauth.domain.member.dto.LoginDto;
+import com.jinwon.ssoauth.infra.exception.CustomException;
 import com.jinwon.ssoauth.infra.component.TokenRedisComponent;
 import com.jinwon.ssoauth.infra.config.jwt.JwtTokenProvider;
 import com.jinwon.ssoauth.infra.config.jwt.enums.TokenMessage;
 import com.jinwon.ssoauth.infra.config.security.CustomUserDetailService;
 import com.jinwon.ssoauth.infra.utils.NetworkUtil;
-import com.jinwon.ssoauth.web.dto.JwtTokenDto;
-import com.jinwon.ssoauth.web.dto.LoginDto;
-import com.jinwon.ssoauth.web.exception.CustomException;
+import com.jinwon.ssoauth.model.JwtTokenDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -26,27 +26,27 @@ import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "프로필 인증 컨트롤러")
-public class ProfileAuthController {
+@Tag(name = "사용자 인증 컨트롤러")
+public class MemberAuthController {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenRedisComponent tokenRedisComponent;
     private final CustomUserDetailService userDetailService;
 
-    @GetMapping("/profile/me")
+    @GetMapping("/member/me")
     @Operation(summary = "사용자 정보 조회")
-    public Mono<Principal> profile(Principal principal) {
+    public Mono<Principal> member(Principal principal) {
         return Mono.just(principal);
     }
 
     @PostMapping("/login")
     @Operation(summary = "사용자 로그인 토큰 발급")
     public Mono<JwtTokenDto> login(HttpServletRequest request, @Valid @RequestBody LoginDto loginDto) {
-        final Profile profile = userDetailService.validProfileThrowIfInvalid(loginDto.getEmail(), loginDto.getPassword());
+        final Member member = userDetailService.validMemberThrowIfInvalid(loginDto.getEmail(), loginDto.getPassword());
         final String clientIp = NetworkUtil.getClientIp(request);
-        final Profile loginProfile = addProfileInfo(profile, clientIp);
+        final Member loginMember = addMemberInfo(member, clientIp);
 
-        final JwtTokenDto jwtTokenDto = new JwtTokenDto(loginProfile.getAccessToken(), loginProfile.getRefreshToken());
+        final JwtTokenDto jwtTokenDto = new JwtTokenDto(loginMember.getAccessToken(), loginMember.getRefreshToken());
         return Mono.just(jwtTokenDto);
     }
 
@@ -56,49 +56,50 @@ public class ProfileAuthController {
         final String expiredAccessToken = jwtTokenDto.getToken();
         final String expiredRefreshToken = jwtTokenDto.getRefreshToken();
 
-        final Optional<Profile> accessProfile = tokenRedisComponent.getTokenProfile(expiredAccessToken);
+        final Optional<Member> accessMember = tokenRedisComponent.getTokenMember(expiredAccessToken);
         final boolean validateToken = jwtTokenProvider.validateToken(expiredAccessToken);
 
-        if (accessProfile.isPresent() && validateToken) {
+        if (accessMember.isPresent() && validateToken) {
             throw new CustomException(TokenMessage.NON_EXPIRED);
         }
 
         tokenRedisComponent.deleteValues(expiredAccessToken);
 
-        final Profile refreshProfile = tokenRedisComponent.getTokenProfile(expiredRefreshToken)
+        final Member refreshMember = tokenRedisComponent.getTokenMember(expiredRefreshToken)
                 .orElseThrow(() -> new CustomException(TokenMessage.EXPIRED_REFRESH_TOKEN));
 
         tokenRedisComponent.deleteValues(expiredRefreshToken);
 
         final String clientIp = NetworkUtil.getClientIp(request);
-        final Profile profile = addProfileInfo(refreshProfile, clientIp);
-        final JwtTokenDto jwtToken = new JwtTokenDto(profile.getAccessToken(), profile.getRefreshToken());
+        final Member member = addMemberInfo(refreshMember, clientIp);
+        final JwtTokenDto jwtToken = new JwtTokenDto(member.getAccessToken(), member.getRefreshToken());
         return Mono.just(jwtToken);
     }
 
-    /* 프로필 추가 정보 저장 */
-    private Profile addProfileInfo(Profile profile, String clientIp) {
-        final String token = jwtTokenProvider.generateToken(profile);
+    /* 회원 추가 정보 저장 */
+    private Member addMemberInfo(Member member, String clientIp) {
+        final String token = jwtTokenProvider.generateToken(member);
         final String refreshToken = jwtTokenProvider.generateRefreshToken();
 
-        final Profile loginProfile = profile.accessToken(token)
+        final Member loginMember = member.accessToken(token)
                 .refreshToken(refreshToken)
                 .clientIp(clientIp);
 
-        tokenRedisComponent.addAccessToken(token, loginProfile);
-        tokenRedisComponent.addRefreshToken(refreshToken, loginProfile);
-        return profile;
+        tokenRedisComponent.addAccessToken(token, loginMember);
+        tokenRedisComponent.addRefreshToken(refreshToken, loginMember);
+        return member;
     }
 
     @PostMapping("/logout")
-    @Operation(summary = "프로필 로그아웃")
+    @Operation(summary = "사용자 로그아웃")
     public Mono<Boolean> logout(Authentication authentication) {
-        @SuppressWarnings("unchecked") final Optional<Profile> profileOp = (Optional<Profile>) authentication.getPrincipal();
+        @SuppressWarnings("unchecked")
+        final Optional<Member> memberOp = (Optional<Member>) authentication.getPrincipal();
 
-        final Profile profile = profileOp.orElseThrow(IllegalArgumentException::new);
+        final Member member = memberOp.orElseThrow(IllegalArgumentException::new);
 
-        final String accessToken = profile.getAccessToken();
-        final String refreshToken = profile.getRefreshToken();
+        final String accessToken = member.getAccessToken();
+        final String refreshToken = member.getRefreshToken();
 
         return Mono.just(
                 tokenRedisComponent.deleteValues(accessToken) && tokenRedisComponent.deleteValues(refreshToken));

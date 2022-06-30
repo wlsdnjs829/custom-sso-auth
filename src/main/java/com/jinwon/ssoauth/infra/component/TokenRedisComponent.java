@@ -2,9 +2,9 @@ package com.jinwon.ssoauth.infra.component;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jinwon.ssoauth.domain.entity.profile.Profile;
+import com.jinwon.ssoauth.domain.member.Member;
 import com.jinwon.ssoauth.infra.config.jwt.enums.TokenMessage;
-import com.jinwon.ssoauth.web.exception.CustomException;
+import com.jinwon.ssoauth.infra.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -37,24 +37,23 @@ public class TokenRedisComponent {
      * 레디스 토큰 정보 저장
      *
      * @param token   accessToken
-     * @param profile 사용자 정보
+     * @param member 사용자 정보
      */
-    public void addAccessToken(String token, Profile profile) {
-        if (Objects.isNull(token) || Objects.isNull(profile)) {
+    public void addAccessToken(String token, Member member) {
+        if (Objects.isNull(token) || Objects.isNull(member)) {
             return;
         }
 
-        final String json = parserJacksonString(profile);
+        final String json = parserJacksonString(member);
         final ValueOperations<String, String> values = redisTemplate.opsForValue();
         values.set(token, json, Duration.ofHours(tokenExpired));
     }
 
     /* 사용자 정보 Json 데이터 변환 */
-    private String parserJacksonString(Profile profile) {
+    private String parserJacksonString(Member member) {
         try {
             final ObjectMapper objectMapper = new ObjectMapper();
-//            objectMapper.registerModule(new Hibernate5Module());
-            return objectMapper.writeValueAsString(profile);
+            return objectMapper.writeValueAsString(member);
         } catch (JsonProcessingException e) {
             log.error(ExceptionUtils.getStackTrace(e));
             throw new CustomException(TokenMessage.PARSER_FAILED);
@@ -65,24 +64,24 @@ public class TokenRedisComponent {
      * 레디스 재설정 토큰 저장
      *
      * @param refreshToken 재설정 토큰
-     * @param profile      사용자 정보
+     * @param member      사용자 정보
      */
-    public void addRefreshToken(String refreshToken, Profile profile) {
-        if (Objects.isNull(refreshToken) || Objects.isNull(profile)) {
+    public void addRefreshToken(String refreshToken, Member member) {
+        if (Objects.isNull(refreshToken) || Objects.isNull(member)) {
             return;
         }
 
-        final String json = parserJacksonString(profile);
+        final String json = parserJacksonString(member);
         final ValueOperations<String, String> values = redisTemplate.opsForValue();
         values.set(refreshToken, json, Duration.ofDays(tokenExpired));
     }
 
     /**
-     * 토큰 프로필 조회
+     * 토큰 회원 조회
      *
      * @param token accessToken & refreshToken
      */
-    public Optional<Profile> getTokenProfile(String token) {
+    public Optional<Member> getTokenMember(String token) {
         final ValueOperations<String, String> values = redisTemplate.opsForValue();
         final String content = values.get(token);
 
@@ -90,16 +89,16 @@ public class TokenRedisComponent {
             return Optional.empty();
         }
 
-        return getProfile(content);
+        return getMember(content);
     }
 
     /* json 데이터 사용자 정보 변환 */
-    private Optional<Profile> getProfile(String content) {
+    private Optional<Member> getMember(String content) {
         try {
             final ObjectMapper objectMapper = new ObjectMapper();
 
             return Optional.of(
-                    objectMapper.readValue(content, Profile.class));
+                    objectMapper.readValue(content, Member.class));
         } catch (JsonProcessingException e) {
             log.error(ExceptionUtils.getStackTrace(e));
             log.error(JSON_PARSING_ERROR);

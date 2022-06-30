@@ -1,16 +1,13 @@
-package com.jinwon.ssoauth.domain.entity.profile;
+package com.jinwon.ssoauth.domain.member;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.jinwon.ssoauth.domain.entity.deserializer.AuthorityDeserializer;
-import com.jinwon.ssoauth.domain.entity.role.Role;
+import com.jinwon.ssoauth.domain.role.Role;
 import com.jinwon.ssoauth.infra.converter.EncryptConverter;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,7 +15,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Convert;
-import javax.persistence.Converter;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -32,19 +28,19 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * 프로필 Entity
+ * 멤버 Entity
  */
 @Table(uniqueConstraints = {
-        @UniqueConstraint(name = "profile_unique_001", columnNames = "email"),
+        @UniqueConstraint(name = "member_unique_001", columnNames = "email"),
 })
 @Getter
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Profile implements UserDetails {
+public class Member implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long profileId;
+    private Long memberId;
 
     @Column(nullable = false, length = 350)
     @Convert(converter = EncryptConverter.class)
@@ -54,7 +50,7 @@ public class Profile implements UserDetails {
     private String name;
 
     @Column(nullable = false, length = 40)
-    private String profileName;
+    private String memberName;
 
     @Column(length = 100)
     private String companyName;
@@ -64,7 +60,7 @@ public class Profile implements UserDetails {
     private String password;
 
     @JsonManagedReference
-    @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<Role> roles = new ArrayList<>();
 
     @Transient
@@ -115,17 +111,17 @@ public class Profile implements UserDetails {
         return true;
     }
 
-    public Profile accessToken(String accessToken) {
+    public Member accessToken(String accessToken) {
         this.accessToken = accessToken;
         return this;
     }
 
-    public Profile refreshToken(String refreshToken) {
+    public Member refreshToken(String refreshToken) {
         this.refreshToken = refreshToken;
         return this;
     }
 
-    public Profile clientIp(String clientIp) {
+    public Member clientIp(String clientIp) {
         this.clientIp = clientIp;
         return this;
     }

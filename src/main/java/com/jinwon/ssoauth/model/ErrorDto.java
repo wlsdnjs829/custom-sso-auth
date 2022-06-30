@@ -1,4 +1,4 @@
-package com.jinwon.ssoauth.web.dto;
+package com.jinwon.ssoauth.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;

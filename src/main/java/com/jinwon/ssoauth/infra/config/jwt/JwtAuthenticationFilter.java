@@ -1,6 +1,6 @@
 package com.jinwon.ssoauth.infra.config.jwt;
 
-import com.jinwon.ssoauth.domain.entity.profile.Profile;
+import com.jinwon.ssoauth.domain.member.Member;
 import com.jinwon.ssoauth.infra.component.TokenRedisComponent;
 import com.jinwon.ssoauth.infra.utils.NetworkUtil;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -59,13 +59,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return Optional.empty();
         }
 
-        final Optional<Profile> userOp = tokenRedisComponent.getTokenProfile(jwt);
+        final Optional<Member> userOp = tokenRedisComponent.getTokenMember(jwt);
 
         if (userOp.isEmpty()) {
             return Optional.empty();
         }
 
-        final String userClientIp = userOp.map(Profile::getClientIp)
+        final String userClientIp = userOp.map(Member::getClientIp)
                 .orElse(org.apache.commons.lang3.StringUtils.EMPTY);
 
         if (!org.apache.commons.lang3.StringUtils.equals(userClientIp, clientIp)) {
@@ -73,7 +73,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         final Collection<? extends GrantedAuthority> authorities =
-                userOp.map(Profile::getAuthorities)
+                userOp.map(Member::getAuthorities)
                         .orElseGet(Collections::emptyList);
 
         return Optional.of(new UsernamePasswordAuthenticationToken(userOp, null, authorities));

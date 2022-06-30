@@ -1,11 +1,10 @@
-package com.jinwon.ssoauth.web.adviser;
+package com.jinwon.ssoauth.infra.adviser;
 
 import com.jinwon.ssoauth.infra.config.jwt.enums.TokenMessage;
-import com.jinwon.ssoauth.web.dto.ErrorDto;
-import com.jinwon.ssoauth.web.exception.CustomException;
-import com.jinwon.ssoauth.web.exception.EncryptionException;
+import com.jinwon.ssoauth.model.ErrorDto;
+import com.jinwon.ssoauth.infra.exception.CustomException;
+import com.jinwon.ssoauth.infra.exception.EncryptionException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;

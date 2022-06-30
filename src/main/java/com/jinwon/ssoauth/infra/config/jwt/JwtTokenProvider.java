@@ -1,9 +1,9 @@
 package com.jinwon.ssoauth.infra.config.jwt;
 
-import com.jinwon.ssoauth.domain.entity.profile.Profile;
+import com.jinwon.ssoauth.domain.member.Member;
 import com.jinwon.ssoauth.infra.config.jwt.enums.JwtException;
 import com.jinwon.ssoauth.infra.config.jwt.enums.TokenMessage;
-import com.jinwon.ssoauth.web.exception.CustomException;
+import com.jinwon.ssoauth.infra.exception.CustomException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jws;
@@ -85,23 +85,23 @@ public class JwtTokenProvider {
     /**
      * accessToken 생성
      *
-     * @param profile 사용자 정보
+     * @param member 사용자 정보
      */
-    public String generateToken(@NotNull Profile profile) {
+    public String generateToken(@NotNull Member member) {
         final Instant now = Instant.now();
 
-        final String id = String.valueOf(profile.getProfileId());
+        final String id = String.valueOf(member.getMemberId());
 
         return Jwts.builder()
                 .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
                 .setIssuer(ISSUER)
                 .setIssuedAt(Date.from(now))
                 .setSubject(id)
-                .setId(profile.getEmail())
+                .setId(member.getEmail())
                 .setExpiration(Date.from(now.plus(tokenExpired, ChronoUnit.HOURS)))
                 .claim(USER_ID, id)
-                .claim(NAME, profile.getName())
-                .claim(EMAIL, profile.getEmail())
+                .claim(NAME, member.getName())
+                .claim(EMAIL, member.getEmail())
                 .signWith(SignatureAlgorithm.RS512, getPrivateKey())
                 .compact();
     }

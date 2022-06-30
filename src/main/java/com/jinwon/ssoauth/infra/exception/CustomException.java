@@ -1,4 +1,4 @@
-package com.jinwon.ssoauth.web.exception;
+package com.jinwon.ssoauth.infra.exception;
 
 import com.jinwon.ssoauth.infra.config.jwt.enums.TokenMessage;
 import lombok.AllArgsConstructor;

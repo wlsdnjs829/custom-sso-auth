@@ -1,4 +1,4 @@
-package com.jinwon.ssoauth.domain.entity.deserializer;
+package com.jinwon.ssoauth.domain.member;
 
 
 import com.fasterxml.jackson.core.JsonParser;
